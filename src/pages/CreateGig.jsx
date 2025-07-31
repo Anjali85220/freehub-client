@@ -1,180 +1,218 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, Tag, Image, X } from 'lucide-react';
-import { toast } from 'react-toastify';
+import axios from 'axios';
+import { Plus, Upload, X } from 'lucide-react';
 
 const CreateGig = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
-    desc: '',
+    description: '',
     price: '',
-    category: ''
+    deliveryTime: '',
+    category: 'graphics-design'
   });
+  const [images, setImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
-  const [actualFiles, setActualFiles] = useState([]);
-  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    const previews = files.map(file => URL.createObjectURL(file));
-    setPreviewImages(prev => [...prev, ...previews]);
-    setActualFiles(prev => [...prev, ...files]);
+    
+    if (files.length + images.length > 5) {
+      setError('You can upload a maximum of 5 images');
+      return;
+    }
+
+    const newPreviewImages = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+
+    setPreviewImages([...previewImages, ...newPreviewImages]);
+    setImages([...images, ...files]);
+    setError('');
   };
 
   const removeImage = (index) => {
-    const updatedPreviews = [...previewImages];
-    const updatedFiles = [...actualFiles];
-    updatedPreviews.splice(index, 1);
-    updatedFiles.splice(index, 1);
-    setPreviewImages(updatedPreviews);
-    setActualFiles(updatedFiles);
+    const newImages = [...images];
+    const newPreviewImages = [...previewImages];
+    
+    newImages.splice(index, 1);
+    newPreviewImages.splice(index, 1);
+    
+    setImages(newImages);
+    setPreviewImages(newPreviewImages);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.title || !formData.desc || !formData.price || !formData.category) {
-      toast.error('Please fill all fields');
-      return;
-    }
-
-    const gigFormData = new FormData();
-    gigFormData.append('title', formData.title);
-    gigFormData.append('desc', formData.desc);
-    gigFormData.append('price', formData.price);
-    gigFormData.append('category', formData.category);
-
-    actualFiles.forEach(file => {
-      gigFormData.append('images', file);
-    });
+    setIsSubmitting(true);
+    setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/gigs', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: gigFormData,
+      const formDataToSend = new FormData();
+      
+      // Append form data
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataToSend.append(key, value);
+      });
+      
+      // Append images
+      images.forEach(image => {
+        formDataToSend.append('images', image);
       });
 
-      const result = await res.json();
+      const response = await axios.post('/gigs', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
-      if (res.ok) {
-        toast.success('Gig created successfully!');
+      if (response.data.success) {
         navigate('/dashboard');
       } else {
-        toast.error(result.error || 'Failed to create gig');
+        throw new Error(response.data.message || 'Failed to create gig');
       }
     } catch (err) {
-      console.error(err);
-      toast.error('An error occurred while creating gig');
+      setError(err.response?.data?.message || err.message || 'Failed to create gig');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Create New Gig</h2>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white shadow rounded-lg p-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Gig</h1>
+          
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 border border-red-300 rounded-md">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
+                maxLength="100"
               />
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
               <textarea
-                name="desc"
-                value={formData.desc}
+                name="description"
+                value={formData.description}
                 onChange={handleChange}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                rows="5"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
-              />
+                maxLength="1000"
+              ></textarea>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹)</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <DollarSign size={16} className="text-gray-400" />
-                  </div>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    required
-                  />
-                </div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                min="5"
+                step="5"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Tag size={16} className="text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    required
-                  />
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Time (days)</label>
+                <input
+                  type="number"
+                  name="deliveryTime"
+                  value={formData.deliveryTime}
+                  onChange={handleChange}
+                  min="1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
               </div>
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Images</label>
-              <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Image size={24} className="text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-500">Upload images</p>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="graphics-design">Graphics & Design</option>
+                <option value="digital-marketing">Digital Marketing</option>
+                <option value="writing-translation">Writing & Translation</option>
+                <option value="video-animation">Video & Animation</option>
+                <option value="music-audio">Music & Audio</option>
+                <option value="programming-tech">Programming & Tech</option>
+                <option value="business">Business</option>
+                <option value="lifestyle">Lifestyle</option>
+              </select>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Images (Max 5)</label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                <div className="space-y-1 text-center">
+                  <div className="flex text-sm text-gray-600">
+                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                      <span>Upload files</span>
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleImageChange}
+                        accept="image/*"
+                        className="sr-only"
+                      />
+                    </label>
+                    <p className="pl-1">or drag and drop</p>
                   </div>
-                  <input
-                    type="file"
-                    className="hidden"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                </label>
+                  <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                </div>
               </div>
 
               {previewImages.length > 0 && (
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {previewImages.map((img, index) => (
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {previewImages.map((image, index) => (
                     <div key={index} className="relative">
                       <img
-                        src={img}
+                        src={image.preview}
                         alt={`Preview ${index}`}
-                        className="w-full h-24 object-cover rounded-lg"
+                        className="h-32 w-full object-cover rounded-md"
                       />
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
                       >
-                        <X size={14} />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
@@ -182,19 +220,18 @@ const CreateGig = () => {
               )}
             </div>
 
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
+            <div className="flex justify-end">
               <button
                 type="submit"
-                className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
+                disabled={isSubmitting}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               >
-                Create Gig
+                {isSubmitting ? 'Creating...' : (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Gig
+                  </>
+                )}
               </button>
             </div>
           </form>

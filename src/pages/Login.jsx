@@ -1,3 +1,4 @@
+// Login.js
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -22,7 +23,12 @@ const Login = () => {
       if (res.ok) {
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(data.user))
-        navigate('/dashboard')
+        // Redirect based on role
+        if (data.user.role === 'client') {
+          navigate('/client')
+        } else {
+          navigate('/dashboard') // Freelancer dashboard
+        }
       } else {
         setError(data.msg)
       }
@@ -30,7 +36,6 @@ const Login = () => {
       setError('Login failed')
     }
   }
-
   return (
     <div
       className="h-screen w-full bg-cover bg-center flex items-center justify-center relative"
