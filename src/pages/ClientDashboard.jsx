@@ -1,24 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  Filter, 
-  Star, 
-  Heart, 
-  ShoppingCart, 
-  User, 
-  Clock, 
-  DollarSign,
-  Eye,
-  Package,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  Image as ImageIcon
-} from 'lucide-react';
 import axios from 'axios';
-import { getPublicGigs, getUserFavorites, getUserOrders } from '../services/gigService';
+import { 
+  getPublicGigs, 
+  getUserFavorites, 
+  getUserOrders 
+} from '../services/gigService';
 import ClientSideNav from '../components/ClientSideNav';
+import ClientGigDetails from './ClientGigDetails';
+import { 
+  Package, 
+  Search, 
+  Heart, 
+  User, 
+  Star, 
+  Image as ImageIcon, 
+  ShoppingCart, 
+  Clock 
+} from 'lucide-react';
 
 const ClientDashboard = () => {
   const [gigs, setGigs] = useState([]);
@@ -32,12 +31,15 @@ const ClientDashboard = () => {
   const [pagination, setPagination] = useState({});
   const [favorites, setFavorites] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [selectedGig, setSelectedGig] = useState(null);
   
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchData();
-  }, [searchTerm, category, priceRange, sortBy, currentPage]);
+    if (!selectedGig) {
+      fetchData();
+    }
+  }, [searchTerm, category, priceRange, sortBy, currentPage, selectedGig]);
 
   const fetchData = async () => {
     try {
@@ -181,12 +183,16 @@ const ClientDashboard = () => {
   };
 
  
+  if (selectedGig) {
+    return <ClientGigDetails gigId={selectedGig._id} onBack={() => setSelectedGig(null)} />;
+  }
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <ClientSideNav />
       <div className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          
           {/* Header */}
           <div className="mb-8">
             <div className="flex justify-between items-center">
@@ -330,7 +336,7 @@ const ClientDashboard = () => {
                   isFavorite={favorites.some(fav => fav._id === gig._id)}
                   onToggleFavorite={toggleFavorite}
                   onAddToCart={addToCart}
-                  onView={() => navigate(`/gig/${gig._id}`)}
+                  onView={() => setSelectedGig(gig)}
                   getImageUrl={getImageUrl}
                 />
               ))}
@@ -376,6 +382,7 @@ const ClientDashboard = () => {
     </div>
   );
 };
+
 
 const GigCard = ({ gig, isFavorite, onToggleFavorite, onAddToCart, onView, getImageUrl }) => {
   const [imageError, setImageError] = useState(false);

@@ -1,24 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
+  getMyGigs, 
+  getMyGigsStats, 
+  deleteGig, 
+  updateGigStatus 
+} from '../services/gigService';
+import FreelancerSideNav from '../components/FreelancerSideNav';
+import FreelancerGigDetails from './FreelancerGigDetails';
+import { 
+  Package, 
+  CheckCircle, 
+  Clock, 
+  Pause, 
+  AlertCircle, 
   Plus, 
-  Eye, 
+  MoreVertical, 
   Edit, 
   Trash2, 
-  MoreVertical, 
-  Star, 
+  Eye, 
   Calendar, 
-  DollarSign,
-  Package,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Pause,
-  Image as ImageIcon
+  Star, 
+  TrendingUp, 
+  Image as ImageIcon 
 } from 'lucide-react';
-import { getMyGigs, getMyGigsStats, deleteGig, updateGigStatus } from '../services/gigService';
-import FreelancerSideNav from '../components/FreelancerSideNav';
 
 const Dashboard = () => {
   const [gigs, setGigs] = useState([]);
@@ -37,13 +42,16 @@ const Dashboard = () => {
     totalViews: 0,
     totalOrders: 0
   });
+  const [selectedGig, setSelectedGig] = useState(null);
   
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchGigs();
-    fetchStats();
-  }, [filter, currentPage]);
+    if (!selectedGig) {
+      fetchGigs();
+      fetchStats();
+    }
+  }, [filter, currentPage, selectedGig]);
 
   const fetchGigs = async () => {
     try {
@@ -189,6 +197,10 @@ const Dashboard = () => {
         </div>
       </div>
     );
+  }
+
+  if (selectedGig) {
+    return <FreelancerGigDetails gigId={selectedGig._id} onBack={() => setSelectedGig(null)} />;
   }
 
   return (
@@ -339,7 +351,7 @@ const Dashboard = () => {
                     onDelete={handleDeleteGig}
                     onStatusChange={handleStatusChange}
                     onEdit={() => navigate(`/edit-gig/${gig._id}`)}
-                    onView={() => navigate(`/gig/${gig._id}`)}
+                    onView={() => setSelectedGig(gig)}
                     getStatusColor={getStatusColor}
                     getStatusIcon={getStatusIcon}
                   />
@@ -392,6 +404,7 @@ const Dashboard = () => {
     </div>
   );
 };
+
 
 const GigCard = ({ gig, onDelete, onStatusChange, onEdit, onView, getStatusColor, getStatusIcon }) => {
   const [showDropdown, setShowDropdown] = useState(false);

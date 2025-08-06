@@ -23,6 +23,7 @@ export const updateGigStatus = (gigId, status) => API.patch(`/gigs/${gigId}/stat
 
 // Client gigs APIs
 export const getPublicGigs = (params) => API.get('/gigs/public', { params });
+export const getPublicGig = (id) => API.get(`/gigs/public/${id}`);
 export const getUserFavorites = () => API.get('/user/favorites');
 export const addUserFavorite = (gigId) => API.post(`/user/favorites/${gigId}`);
 export const deleteUserFavorite = (gigId) => API.delete(`/user/favorites/${gigId}`);

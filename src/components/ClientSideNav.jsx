@@ -1,37 +1,66 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { HomeIcon, UserIcon, ShoppingCartIcon, ChatBubbleLeftEllipsisIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
 const ClientSideNav = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Clear user data from localStorage
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    // Navigate to login page
     navigate('/login');
   };
 
   return (
     <div className="w-64 h-screen bg-gray-800 text-white flex flex-col">
       <div className="p-4 border-b border-gray-700">
-        <h2 className="text-2xl font-bold">Client</h2>
+        <h2 className="text-2xl font-bold">Client Panel</h2>
       </div>
       <nav className="flex-1 p-4">
-        <ul>
-          <li className="mb-4">
-            <Link to="/client" className="flex items-center p-2 text-base font-normal text-white rounded-lg hover:bg-gray-700">
-              <span className="ml-3">Dashboard</span>
+        <ul className="space-y-2">
+          <li>
+            <Link 
+              to="/client" 
+              className="flex items-center p-3 text-white hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <HomeIcon className="h-5 w-5 mr-3" />
+              Dashboard
             </Link>
           </li>
-          <li className="mb-4">
-            <Link to="/client-profile" className="flex items-center p-2 text-base font-normal text-white rounded-lg hover:bg-gray-700">
-              <span className="ml-3">Profile</span>
+          <li>
+            <Link 
+              to="/client-profile" 
+              className="flex items-center p-3 text-white hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <UserIcon className="h-5 w-5 mr-3" />
+              Profile
             </Link>
           </li>
-          <li className="mb-4">
-            <Link to="/cart" className="flex items-center p-2 text-base font-normal text-white rounded-lg hover:bg-gray-700">
-              <span className="ml-3">Cart</span>
+          <li>
+            <Link 
+              to="/cart" 
+              className="flex items-center p-3 text-white hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <ShoppingCartIcon className="h-5 w-5 mr-3" />
+              Cart
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/chat" 
+              className="flex items-center p-3 text-white hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <ChatBubbleLeftEllipsisIcon className="h-5 w-5 mr-3" />
+              Chat
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/my-orders" 
+              className="flex items-center p-3 text-white hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <ClipboardDocumentListIcon className="h-5 w-5 mr-3" />
+              My Orders
             </Link>
           </li>
         </ul>
